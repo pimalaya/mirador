@@ -1,0 +1,57 @@
+[package]
+name = "mirador"
+description = "CLI to watch mailbox changes"
+version = "1.0.0"
+authors = ["soywod <clement.douin@posteo.net>"]
+edition = "2021"
+license = "MIT"
+categories = ["command-line-utilities", "email"]
+keywords = ["cli", "email", "watch", "imap", "maildir"]
+homepage = "https://github.com/pimalaya/"
+documentation = "https://github.com/pimalaya/mirador/"
+repository = "https://github.com/pimalaya/mirador/"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs", "--document-private-items"]
+
+[features]
+default = [
+  "imap",
+  "maildir",
+  
+  # "keyring",
+  # "oauth2",
+  "wizard",
+]
+
+imap = ["email-lib/imap", "pimalaya-tui/imap"]
+maildir = ["email-lib/maildir", "pimalaya-tui/maildir"]
+
+keyring = ["email-lib/keyring", "pimalaya-tui/keyring", "secret-lib?/keyring-tokio"]
+oauth2 = ["dep:oauth-lib", "email-lib/oauth2", "pimalaya-tui/oauth2", "keyring"]
+wizard = ["dep:secret-lib", "email-lib/autoconfig"]
+
+[dependencies]
+async-ctrlc = { version = "1.2", features = ["termination"] }
+clap = { version = "4.4", features = ["derive", "wrap_help", "env"] }
+clap_complete = "4.4"
+clap_mangen = "0.2"
+color-eyre = "0.6"
+email-lib = { version = "=0.25.0", default-features = false, features = ["watch", "notify", "tracing", "derive"] }
+oauth-lib = { version = "=0.1.1", optional = true }
+pimalaya-tui = { version = "=0.1.0", default-features = false, features = ["email", "path", "cli", "config", "tracing"] }
+secret-lib = { version = "=0.4.6", optional = true, features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+shellexpand-utils = "=0.2.1"
+tokio = { version = "1.23", default-features = false, features = ["macros", "rt-multi-thread"] }
+tracing = "0.1"
+
+[patch.crates-io]
+imap-codec = { git = "https://github.com/duesee/imap-codec" }
+imap-next = { git = "https://github.com/duesee/imap-next", branch = "jakoschiko_poison-message-with-fragmentizer" }
+imap-client = { git = "https://github.com/pimalaya/imap-client" }
+oauth-lib = { git = "https://github.com/pimalaya/core" }
+email-lib = { git = "https://github.com/pimalaya/core" }
+pimalaya-tui = { git = "https://github.com/pimalaya/tui" }

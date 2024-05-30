@@ -1,0 +1,165 @@
+################################################################################
+#### Account configuration #####################################################
+################################################################################
+
+[accounts.example]
+
+# Defaultness of the account
+#
+# The current account will be used by default in all commands.
+#
+default = true
+
+# Mailbox to watch changes for
+#
+folder = "INBOX"
+
+# Mapping an action to a watch event
+#
+# Available placeholders: {id}, {subject}, {sender}, {sender.name},
+# {sender.address}, {recipient}, {recipient.name},
+# {recipient.address}.
+#
+# on-message-added.cmd = "mbsync example"
+# on-message-added.cmd = "neverest sync -a example"
+on-message-added.notify.summary = "📫 New message from {sender}"
+on-message-added.notify.body = "{subject}"
+
+########################################
+#### IMAP configuration ################
+########################################
+
+# Defines the IMAP backend as the default one for all features.
+#
+backend.type = "imap"
+
+# IMAP server host name.
+#
+backend.host = "localhost"
+
+# IMAP server port.
+#
+#backend.port = 143
+backend.port = 993
+
+# IMAP server encryption.
+#
+#backend.encryption = "none" # or false
+#backend.encryption = "start-tls"
+backend.encryption = "tls" # or true
+
+# IMAP server login.
+#
+backend.login = "example@localhost"
+
+# IMAP server password authentication configuration.
+#
+#backend.auth.type = "password"
+#
+# Password can be inlined (not recommended).
+#
+#backend.auth.raw = "p@assw0rd"
+#
+# Password can be stored inside your system global keyring (requires
+# the keyring cargo feature). You must run at least once `himalaya
+# account configure` to set up the password.
+#
+#backend.auth.keyring = "example-imap"
+#
+# Password can be retrieved from a shell command.
+#
+backend.auth.cmd = "pass show example-imap"
+
+# IMAP server OAuth 2.0 authorization configuration.
+#
+#right.backend.auth.type = "oauth2"
+#
+# Client identifier issued to the client during the registration
+# process described in RFC6749.
+# See <https://datatracker.ietf.org/doc/html/rfc6749#section-2.2>.
+#
+#backend.auth.client-id = "client-id"
+#
+# Client password issued to the client during the registration process
+# described in RFC6749.
+#
+# Defaults to keyring "<account-name>-imap-client-secret".
+# See <https://datatracker.ietf.org/doc/html/rfc6749#section-2.2>.
+#
+#backend.auth.client-secret.raw = "<raw-client-secret>"
+#backend.auth.client-secret.keyring = "example-imap-client-secret"
+#backend.auth.client-secret.cmd = "pass show example-imap-client-secret"
+#
+# Method for presenting an OAuth 2.0 bearer token to a service for
+# authentication.
+#
+#backend.auth.method = "oauthbearer"
+#backend.auth.method = "xoauth2"
+#
+# URL of the authorization server's authorization endpoint.
+#
+#backend.auth.auth-url = "https://accounts.google.com/o/oauth2/v2/auth"
+#
+# URL of the authorization server's token endpoint.
+#
+#backend.auth.token-url = "https://www.googleapis.com/oauth2/v3/token"
+#
+# Access token returned by the token endpoint and used to access
+# protected resources. It is recommended to use the keyring variant,
+# as it will refresh automatically.
+#
+# Defaults to keyring "<account-name>-imap-access-token".
+#
+#backend.auth.access-token.raw = "<raw-access-token>"
+#backend.auth.access-token.keyring = "example-imap-access-token"
+#backend.auth.access-token.cmd = "pass show example-imap-access-token"
+#
+# Refresh token used to obtain a new access token (if supported by the
+# authorization server). It is recommended to use the keyring variant,
+# as it will refresh automatically.
+#
+# Defaults to keyring "<account-name>-imap-refresh-token".
+#
+#backend.auth.refresh-token.raw = "<raw-refresh-token>"
+#backend.auth.refresh-token.keyring = "example-imap-refresh-token"
+#backend.auth.refresh-token.cmd = "pass show example-imap-refresh-token"
+#
+# Enable the protection, as defined in RFC7636.
+#
+# See <https://datatracker.ietf.org/doc/html/rfc7636>.
+#
+#backend.auth.pkce = true
+#
+# Access token scope(s), as defined by the authorization server.
+#
+#backend.auth.scope = "unique scope"
+#backend.auth.scopes = ["multiple", "scopes"]
+#
+# Host name of the redirect server.
+# Defaults to localhost.
+#
+#backend.auth.redirect-host = "localhost"
+#
+# Port of the redirect server.
+# Defaults to the first available one.
+#
+#backend.auth.redirect-port = 9999
+
+########################################
+#### Maildir configuration #############
+########################################
+
+# Defines the Maildir backend
+#
+#backend.type = "maildir"
+
+# The Maildir root directory. The path should point to the root level
+# of the Maildir directory.
+#
+#backend.root-dir = "~/.Mail/example"
+
+# Does the Maildir folder follows the Maildir++ standard?
+#
+# See <https://en.wikipedia.org/wiki/Maildir#Maildir++>.
+#
+#backend.maildirpp = false
