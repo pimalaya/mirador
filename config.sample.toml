@@ -54,7 +54,7 @@ backend.login = "example@localhost"
 
 # IMAP server password authentication configuration.
 #
-#backend.auth.type = "password"
+backend.auth.type = "password"
 #
 # Password can be inlined (not recommended).
 #
