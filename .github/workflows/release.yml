@@ -31,30 +31,32 @@ jobs:
         include:
           - target: x86_64-linux
             os: ubuntu-latest
-          - target: arm64-linux
+          - target: aarch64-linux
             os: ubuntu-latest
           - target: x86_64-windows
             os: ubuntu-latest
-          - target: x86_64-macos
-            os: macos-latest
+          - target: x86_64-darwin
+            os: macos-13
+          - target: aarch64-darwin
+            os: macos-14
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Install Nix
-        uses: cachix/install-nix-action@v24
+        uses: cachix/install-nix-action@v27
         with:
-          nix_path: nixpkgs=channel:nixos-23.11
+          nix_path: nixpkgs=channel:nixos-24.05
           extra_nix_config: |
             experimental-features = nix-command flakes
-      - uses: cachix/cachix-action@v12
+      - uses: cachix/cachix-action@v15
         with:
           name: soywod
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+          extraPullNames: nix-community
       - name: Build release archive
         run: |
-          git clone --depth 1 --branch ${{ github.ref_name }} https://git.sr.ht/~soywod/mirador-cli
-          cd mirador-cli
           nix build -L .#${{ matrix.target }}
-          cd ..
-          cp mirador-cli/result/bin/mirador* .
+          cp result/mirador* .
       - name: Upload tgz release archive
         uses: actions/upload-release-asset@v1
         env:
@@ -73,21 +75,3 @@ jobs:
           asset_path: mirador.zip
           asset_name: mirador.${{ matrix.target }}.zip
           asset_content_type: application/zip
-
-  publish-crate:
-    runs-on: ubuntu-latest
-    needs: deploy-releases
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2        
-      - name: Install Nix
-        uses: cachix/install-nix-action@v24
-        with:
-          nix_path: nixpkgs=channel:nixos-23.11
-          extra_nix_config: |
-            experimental-features = nix-command flakes
-      - name: Publish crate to crates.io
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: |
-          nix develop -c cargo publish --no-verify --token ${CARGO_REGISTRY_TOKEN}

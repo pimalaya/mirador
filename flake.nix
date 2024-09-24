@@ -2,7 +2,7 @@
   description = "CLI to watch mailbox changes";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-23.11";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.05";
     gitignore = {
       url = "github:hercules-ci/gitignore.nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -25,66 +25,89 @@
 
   outputs = { self, nixpkgs, gitignore, fenix, naersk, ... }:
     let
+      inherit (nixpkgs) lib;
       inherit (gitignore.lib) gitignoreSource;
 
-      staticRustFlags = [ "-Ctarget-feature=+crt-static" ];
-
-      # Map of map matching supported Nix build systems with Rust
-      # cross target systems.
-      crossBuildTargets = {
+      crossSystems = {
         x86_64-linux = {
           x86_64-linux = {
             rustTarget = "x86_64-unknown-linux-musl";
-            override = { ... }: { };
           };
 
-          arm64-linux = rec {
+          aarch64-linux = rec {
             rustTarget = "aarch64-unknown-linux-musl";
-            override = { system, pkgs }:
+            runner = { pkgs, mirador }: "${pkgs.qemu}/bin/qemu-aarch64 ${mirador}";
+            mkPackage = { system, pkgs }: package:
               let
                 inherit (mkPkgsCross system rustTarget) stdenv;
-                cc = "${stdenv.cc}/bin/${stdenv.cc.targetPrefix}cc"; in
-              rec {
+                cc = "${stdenv.cc}/bin/${stdenv.cc.targetPrefix}cc";
+              in
+              package // {
                 TARGET_CC = cc;
-                CARGO_BUILD_RUSTFLAGS = staticRustFlags ++ [ "-Clinker=${cc}" ];
-                postInstall = mkPostInstall {
-                  inherit pkgs;
-                  bin = "${pkgs.qemu}/bin/qemu-aarch64 ./mirador";
-                };
+                CARGO_BUILD_RUSTFLAGS = package.CARGO_BUILD_RUSTFLAGS ++ [ "-Clinker=${cc}" ];
               };
           };
 
           x86_64-windows = {
             rustTarget = "x86_64-pc-windows-gnu";
-            override = { system, pkgs }:
+            runner = { pkgs, mirador }:
+              let wine = pkgs.wine.override { wineBuild = "wine64"; };
+              in "${wine}/bin/wine64 ${mirador}.exe";
+            mkPackage = { system, pkgs }: package:
               let
-                inherit (pkgs) pkgsCross zip;
-                inherit (pkgsCross.mingwW64) stdenv windows;
+                inherit (pkgs.pkgsCross.mingwW64) stdenv windows;
                 cc = "${stdenv.cc}/bin/${stdenv.cc.targetPrefix}cc";
-                wine = pkgs.wine.override { wineBuild = "wine64"; };
-                postInstall = mkPostInstall {
-                  inherit pkgs;
-                  bin = "${wine}/bin/wine64 ./mirador.exe";
-                };
               in
-              {
+              package // {
                 depsBuildBuild = [ stdenv.cc windows.pthreads ];
                 TARGET_CC = cc;
-                CARGO_BUILD_RUSTFLAGS = staticRustFlags ++ [ "-Clinker=${cc}" ];
-                postInstall = ''
-                  export WINEPREFIX="$(mktemp -d)"
-                  ${postInstall}
-                '';
+                CARGO_BUILD_RUSTFLAGS = package.CARGO_BUILD_RUSTFLAGS ++ [ "-Clinker=${cc}" ];
               };
           };
         };
 
+        aarch64-linux = {
+          aarch64-linux = {
+            rustTarget = "aarch64-unknown-linux-musl";
+          };
+        };
+
         x86_64-darwin = {
-          x86_64-macos = {
+          x86_64-darwin = {
             rustTarget = "x86_64-apple-darwin";
-            override = { pkgs, ... }:
-              let inherit (pkgs.darwin.apple_sdk.frameworks) AppKit Cocoa; in
-              {
+            mkPackage = { pkgs, ... }: package:
+              let inherit (pkgs.darwin.apple_sdk.frameworks) AppKit Cocoa;
+              in package // {
+                buildInputs = [ Cocoa ];
+                NIX_LDFLAGS = "-F${AppKit}/Library/Frameworks -framework AppKit";
+              };
+          };
+
+          # FIXME: https://github.com/NixOS/nixpkgs/issues/273442
+          aarch64-darwin = {
+            rustTarget = "aarch64-apple-darwin";
+            runner = { pkgs, mirador }: "${pkgs.qemu}/bin/qemu-aarch64 ${mirador}";
+            mkPackage = { system, pkgs }: package:
+              let
+                inherit ((mkPkgsCross system "aarch64-darwin").pkgsStatic) stdenv darwin;
+                inherit (darwin.apple_sdk.frameworks) AppKit Cocoa;
+                cc = "${stdenv.cc}/bin/${stdenv.cc.targetPrefix}cc";
+              in
+              package // {
+                buildInputs = [ Cocoa ];
+                NIX_LDFLAGS = "-F${AppKit}/Library/Frameworks -framework AppKit";
+                TARGET_CC = cc;
+                CARGO_BUILD_RUSTFLAGS = package.CARGO_BUILD_RUSTFLAGS ++ [ "-Clinker=${cc}" ];
+              };
+          };
+        };
+
+        aarch64-darwin = {
+          aarch64-darwin = {
+            rustTarget = "aarch64-apple-darwin";
+            mkPackage = { pkgs, ... }: package:
+              let inherit (pkgs.darwin.apple_sdk.frameworks) AppKit Cocoa;
+              in package // {
                 buildInputs = [ Cocoa ];
                 NIX_LDFLAGS = "-F${AppKit}/Library/Frameworks -framework AppKit";
               };
@@ -92,98 +115,111 @@
         };
       };
 
-      mkToolchain = import ./rust-toolchain.nix fenix;
+      eachBuildSystem = lib.genAttrs (builtins.attrNames crossSystems);
 
       mkPkgsCross = buildSystem: crossSystem: import nixpkgs {
         system = buildSystem;
         crossSystem.config = crossSystem;
       };
 
-      mkPostInstall = { pkgs, bin ? "./mirador" }: with pkgs; ''
-        cd $out/bin
-        mkdir -p {man,completions}
-        ${bin} man ./man
-        ${bin} completion bash > ./completions/mirador.bash
-        ${bin} completion elvish > ./completions/mirador.elvish
-        ${bin} completion fish > ./completions/mirador.fish
-        ${bin} completion powershell > ./completions/mirador.powershell
-        ${bin} completion zsh > ./completions/mirador.zsh
-        tar -czf mirador.tgz mirador* man completions
-        ${zip}/bin/zip -r mirador.zip mirador* man completions
-      '';
+      mkToolchain = import ./rust-toolchain.nix fenix;
 
-      mkDevShells = buildPlatform:
+      mkApp = { pkgs, buildSystem, targetSystem ? buildSystem }:
         let
-          pkgs = import nixpkgs { system = buildPlatform; };
-          rust-toolchain = mkToolchain.fromFile { system = buildPlatform; };
+          mirador = lib.getExe self.packages.${buildSystem}.${targetSystem};
+          wrapper = crossSystems.${buildSystem}.${targetSystem}.runner or (_: mirador) { inherit pkgs mirador; };
+          program = lib.getExe (pkgs.writeShellScriptBin "mirador" "${wrapper} $@");
+          app = { inherit program; type = "app"; };
         in
-        {
-          default = pkgs.mkShell {
+        app;
+
+      mkApps = buildSystem:
+        let
+          pkgs = import nixpkgs { system = buildSystem; };
+          mkApp' = targetSystem: _: mkApp { inherit pkgs buildSystem targetSystem; };
+          defaultApp = mkApp { inherit pkgs buildSystem; };
+          apps = builtins.mapAttrs mkApp' crossSystems.${buildSystem};
+        in
+        apps // { default = defaultApp; };
+
+      mkPackage = { pkgs, buildSystem, targetSystem ? buildSystem }:
+        let
+          targetConfig = crossSystems.${buildSystem}.${targetSystem};
+          toolchain = mkToolchain.fromTarget {
+            inherit pkgs buildSystem;
+            targetSystem = targetConfig.rustTarget;
+          };
+          rust = naersk.lib.${buildSystem}.override {
+            cargo = toolchain;
+            rustc = toolchain;
+          };
+          mkPackage' = targetConfig.mkPackage or (_: p: p);
+          mirador = "./mirador";
+          runner = targetConfig.runner or (_: mirador) { inherit pkgs mirador; };
+          package = mkPackage' { inherit pkgs; system = buildSystem; } {
+            name = "mirador";
+            src = gitignoreSource ./.;
+            strictDeps = true;
+            doCheck = false;
+            auditable = false;
+            nativeBuildInputs = with pkgs; [ pkg-config ];
+            CARGO_BUILD_TARGET = targetConfig.rustTarget;
+            CARGO_BUILD_RUSTFLAGS = [ "-Ctarget-feature=+crt-static" ];
+            postInstall = ''
+              export WINEPREFIX="$(mktemp -d)"
+
+              mkdir -p $out/bin/share/{completions,man,services}
+              cp assets/mirador-watch@.service $out/bin/share/services/
+
+              cd $out/bin
+              ${runner} man ./share/man
+              ${runner} completion bash > ./share/completions/mirador.bash
+              ${runner} completion elvish > ./share/completions/mirador.elvish
+              ${runner} completion fish > ./share/completions/mirador.fish
+              ${runner} completion powershell > ./share/completions/mirador.powershell
+              ${runner} completion zsh > ./share/completions/mirador.zsh
+              tar -czf mirador.tgz mirador* share
+              ${pkgs.zip}/bin/zip -r mirador.zip mirador* share
+
+              mv share ../
+              mv mirador.tgz mirador.zip ../
+            '';
+          };
+        in
+        rust.buildPackage package;
+
+      mkPackages = buildSystem:
+        let
+          pkgs = import nixpkgs { system = buildSystem; };
+          mkPackage' = targetSystem: _: mkPackage { inherit pkgs buildSystem targetSystem; };
+          defaultPackage = mkPackage { inherit pkgs buildSystem; };
+          packages = builtins.mapAttrs mkPackage' crossSystems.${buildSystem};
+        in
+        packages // { default = defaultPackage; };
+
+      mkDevShells = buildSystem:
+        let
+          pkgs = import nixpkgs { system = buildSystem; };
+          rust-toolchain = mkToolchain.fromFile { inherit buildSystem; };
+          defaultShell = pkgs.mkShell {
             nativeBuildInputs = with pkgs; [ pkg-config ];
             buildInputs = with pkgs; [
               # Nix
-              nil
+              nixd
               nixpkgs-fmt
 
               # Rust
               rust-toolchain
               cargo-watch
-
-              # Notmuch
-              notmuch
             ];
           };
-        };
-
-      mkPackage = pkgs: buildPlatform: targetPlatform: package:
-        let
-          toolchain = mkToolchain.fromTarget {
-            inherit pkgs buildPlatform targetPlatform;
-          };
-          naersk' = naersk.lib.${buildPlatform}.override {
-            cargo = toolchain;
-            rustc = toolchain;
-          };
-          package' = {
-            name = "mirador";
-            src = gitignoreSource ./.;
-            doCheck = false;
-            auditable = false;
-            strictDeps = true;
-            CARGO_BUILD_TARGET = targetPlatform;
-            CARGO_BUILD_RUSTFLAGS = staticRustFlags;
-            postInstall = mkPostInstall { inherit pkgs; };
-          } // package;
         in
-        naersk'.buildPackage package';
+        { default = defaultShell; };
 
-      mkPackages = system:
-        let
-          pkgs = import nixpkgs { inherit system; };
-          mkPackage' = target: package: mkPackage pkgs system package.rustTarget (package.override { inherit system pkgs; });
-        in
-        builtins.mapAttrs mkPackage' crossBuildTargets.${system};
-
-      mkApp = drv:
-        let exePath = drv.passthru.exePath or "/bin/mirador"; in
-        {
-          type = "app";
-          program = "${drv}${exePath}";
-        };
-
-      mkApps = buildPlatform:
-        let
-          pkgs = import nixpkgs { system = buildPlatform; };
-          mkApp' = target: package: mkApp self.packages.${buildPlatform}.${target};
-        in
-        builtins.mapAttrs mkApp' crossBuildTargets.${buildPlatform};
-
-      supportedSystems = builtins.attrNames crossBuildTargets;
-      mapSupportedSystem = nixpkgs.lib.genAttrs supportedSystems;
     in
     {
-      apps = mapSupportedSystem mkApps;
-      packages = mapSupportedSystem mkPackages;
-      devShells = mapSupportedSystem mkDevShells;
+      apps = eachBuildSystem mkApps;
+      packages = eachBuildSystem mkPackages;
+      devShells = eachBuildSystem mkDevShells;
     };
 }

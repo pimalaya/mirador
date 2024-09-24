@@ -1,0 +1,13 @@
+[Unit]
+Description=Mirador CLI watcher service
+After=network.target
+
+[Service]
+Type=exec
+ExecStart=%install_dir%/mirador watch --account %i
+ExecSearchPath=/bin
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target
