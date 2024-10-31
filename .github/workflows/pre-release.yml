@@ -39,13 +39,10 @@ jobs:
         run: |
           nix build -L .#${{ matrix.target }}
           nix run -L .#${{ matrix.target }} -- --version
-      - name: Upload release artifact (tarball)
+      - name: Upload release artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: "mirador.${{ matrix.target }}.tgz"
-          path: result/mirador.tgz
-      - name: Upload release artifact (zip)
-        uses: actions/upload-artifact@v4
-        with:
-          name: "mirador.${{ matrix.target }}.zip"
-          path: result/mirador.zip
+          name: "mirador.${{ matrix.target }}"
+          path: |
+            result/bin/mirador*
+            result/bin/share

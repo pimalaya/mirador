@@ -4,17 +4,17 @@
 
 [accounts.example]
 
-# Defaultness of the account
-#
-# The current account will be used by default in all commands.
+# Defaultness of the account. The current account will be used by
+# default in all commands.
 #
 default = true
 
-# Mailbox to watch changes for
+# Mailbox/folder to watch changes for.
 #
 folder = "INBOX"
 
-# Mapping an action to a watch event
+# Map an action to a watch event. The action can be a shell command, a
+# system notification, or a combination of both.
 #
 # Available placeholders: {id}, {subject}, {sender}, {sender.name},
 # {sender.address}, {recipient}, {recipient.name},
@@ -134,6 +134,11 @@ backend.auth.cmd = "pass show example-imap"
 #
 #backend.auth.scope = "unique scope"
 #backend.auth.scopes = ["multiple", "scopes"]
+#
+# URL scheme of the redirect server.
+# Defaults to http.
+#
+#backend.auth.redirect-scheme = "http"
 #
 # Host name of the redirect server.
 # Defaults to localhost.

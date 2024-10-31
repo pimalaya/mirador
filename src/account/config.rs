@@ -13,7 +13,7 @@ use crate::backend::config::BackendConfig;
 /// The account configuration.
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case", deny_unknown_fields)]
-pub struct AccountConfig {
+pub struct TomlAccountConfig {
     /// The defaultness of the current account.
     ///
     /// When watching, if no account name is explicitly given, this
@@ -37,24 +37,15 @@ pub struct AccountConfig {
     pub on_message_added: Option<WatchHook>,
 }
 
-impl AccountConfig {
+impl TomlAccountConfig {
     /// Configure the current account configuration.
     ///
     /// This function is mostly used to replace undefined keyring
     /// entries by default ones, based on the given account name.
-    pub fn configure(&mut self, _account_name: &str) -> Result<()> {
-        match &mut self.backend {
-            #[cfg(feature = "imap")]
-            BackendConfig::Imap(_config) => {
-                #[cfg(feature = "keyring")]
-                _config
-                    .auth
-                    .replace_undefined_keyring_entries(&_account_name)?;
-            }
-            #[cfg(feature = "maildir")]
-            BackendConfig::Maildir(_) => {
-                //
-            }
+    pub fn configure(&mut self, #[allow(unused_variables)] account_name: &str) -> Result<()> {
+        #[cfg(all(feature = "imap", feature = "keyring"))]
+        if let BackendConfig::Imap(config) = &mut self.backend {
+            config.auth.replace_empty_secrets(&account_name)?;
         }
 
         Ok(())

@@ -1,12 +1,12 @@
 use color_eyre::Result;
 use email::watch::config::{WatchHook, WatchNotifyConfig};
-use pimalaya_tui::prompt;
+use pimalaya_tui::terminal::prompt;
 
 use crate::backend;
 
-use super::config::AccountConfig;
+use super::config::TomlAccountConfig;
 
-pub async fn configure() -> Result<(String, AccountConfig)> {
+pub async fn configure() -> Result<(String, TomlAccountConfig)> {
     let name = prompt::text("Account name:", Some("personal"))?;
     let folder = prompt::text("Folder to watch:", Some("INBOX"))?;
     let hook = WatchHook {
@@ -26,7 +26,7 @@ pub async fn configure() -> Result<(String, AccountConfig)> {
         callback: None,
     };
 
-    let config = AccountConfig {
+    let config = TomlAccountConfig {
         default: Some(true),
         folder: Some(folder),
         on_message_added: Some(hook),

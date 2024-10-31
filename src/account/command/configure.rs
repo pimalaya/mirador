@@ -2,12 +2,11 @@ use clap::Parser;
 use color_eyre::{Report, Result};
 #[cfg(feature = "imap")]
 use email::imap::config::ImapAuthConfig;
-#[cfg(feature = "imap")]
-use pimalaya_tui::prompt;
+use pimalaya_tui::terminal::{config::TomlConfig as _, prompt};
 use tracing::{debug, info, instrument, warn};
 
 use crate::{
-    account::arg::name::OptionalAccountNameArg, backend::config::BackendConfig, config::Config,
+    account::arg::name::OptionalAccountNameArg, backend::config::BackendConfig, config::TomlConfig,
 };
 
 /// Configure an account.
@@ -30,10 +29,10 @@ pub struct ConfigureAccountCommand {
 
 impl ConfigureAccountCommand {
     #[instrument(skip_all)]
-    pub async fn execute(self, config: &Config) -> Result<()> {
+    pub async fn execute(self, config: &TomlConfig) -> Result<()> {
         info!("executing configure account command");
 
-        let (name, config) = config.into_account_config(self.account.name.as_deref())?;
+        let (name, config) = config.to_toml_account_config(self.account.name.as_deref())?;
 
         if self.reset {
             let reset = match &config.backend {
@@ -52,7 +51,7 @@ impl ConfigureAccountCommand {
         match &config.backend {
             #[cfg(feature = "imap")]
             BackendConfig::Imap(config) => match &config.auth {
-                ImapAuthConfig::Passwd(config) => {
+                ImapAuthConfig::Password(config) => {
                     config
                         .configure(|| prompt::password("Left IMAP password").map_err(Into::into))
                         .await?;

@@ -2,14 +2,14 @@ use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::Result;
-use pimalaya_tui::cli::arg::path_parser;
+use pimalaya_tui::terminal::{cli::arg::path_parser, config::TomlConfig as _};
 
 use crate::{
     account::command::{
         configure::ConfigureAccountCommand, doctor::DoctorAccountCommand, watch::WatchCommand,
     },
     completion::command::GenerateCompletionCommand,
-    config::Config,
+    config::TomlConfig,
     manual::command::GenerateManualCommand,
 };
 
@@ -71,15 +71,15 @@ impl MiradorCommand {
     pub async fn execute(self, config_paths: &[PathBuf]) -> Result<()> {
         match self {
             Self::Doctor(cmd) => {
-                let config = Config::from_paths_or_default(config_paths).await?;
+                let config = TomlConfig::from_paths_or_default(config_paths).await?;
                 cmd.execute(&config).await
             }
             Self::Configure(cmd) => {
-                let config = Config::from_paths_or_default(config_paths).await?;
+                let config = TomlConfig::from_paths_or_default(config_paths).await?;
                 cmd.execute(&config).await
             }
             Self::Watch(cmd) => {
-                let config = Config::from_paths_or_default(config_paths).await?;
+                let config = TomlConfig::from_paths_or_default(config_paths).await?;
                 cmd.execute(&config).await
             }
             Self::Manual(cmd) => cmd.execute().await,

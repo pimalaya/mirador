@@ -3,6 +3,8 @@
 //! This module contains the [`clap`] command for checking up left and
 //! right backends integrity of a given account.
 
+use std::sync::Arc;
+
 use clap::Parser;
 use color_eyre::eyre::Result;
 use email::backend::context::BackendContextBuilder;
@@ -10,11 +12,11 @@ use email::backend::context::BackendContextBuilder;
 use email::imap::ImapContextBuilder;
 #[cfg(feature = "maildir")]
 use email::maildir::MaildirContextBuilder;
-use std::sync::Arc;
+use pimalaya_tui::terminal::config::TomlConfig as _;
 use tracing::instrument;
 
 use crate::{
-    account::arg::name::OptionalAccountNameArg, backend::config::BackendConfig, config::Config,
+    account::arg::name::OptionalAccountNameArg, backend::config::BackendConfig, config::TomlConfig,
 };
 
 /// Check up the given account.
@@ -30,8 +32,8 @@ pub struct DoctorAccountCommand {
 
 impl DoctorAccountCommand {
     #[instrument(skip_all)]
-    pub async fn execute(self, config: &Config) -> Result<()> {
-        let (name, config) = config.into_account_config(self.account.name.as_deref())?;
+    pub async fn execute(self, config: &TomlConfig) -> Result<()> {
+        let (name, config) = config.to_toml_account_config(self.account.name.as_deref())?;
         let (backend, config) = config.into_account_config(name.clone());
 
         match backend {

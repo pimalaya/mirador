@@ -1,6 +1,6 @@
 use color_eyre::Result;
 use email::autoconfig;
-use pimalaya_tui::{prompt, wizard};
+use pimalaya_tui::terminal::{prompt, wizard};
 
 use super::{config::BackendConfig, BackendKind};
 

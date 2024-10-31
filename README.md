@@ -19,6 +19,20 @@ CLI to watch mailbox changes, based on [`email-lib`](https://crates.io/crates/em
 
 ## Installation
 
+*The `v1.0.0` is currently being tested on the `master` branch, and is the prefered version to use. Previous versions (including GitHub beta releases and repositories published versions) are not recommended.*
+
+### Pre-built binary
+
+Mirador CLI `v1.0.0` can be installed with a pre-built binary. Find the latest [`pre-release`](https://github.com/pimalaya/mirador/actions/workflows/pre-release.yml) GitHub workflow and look for the *Artifacts* section. You should find a pre-built binary matching your OS.
+
+### Cargo (git)
+
+Mirador CLI `v1.0.0` can also be installed with [cargo](https://doc.rust-lang.org/cargo/):
+
+```bash
+$ cargo install --frozen --force --git https://github.com/pimalaya/mirador.git
+```
+
 Mirador CLI can be installed with a prebuilt binary:
 
 ```bash
@@ -34,6 +48,22 @@ These commands install the latest binary from the GitHub [releases](https://gith
 *Binaries are built with [default](https://github.com/pimalaya/mirador/blob/master/Cargo.toml#L18) cargo features. If you want to enable or disable a feature, please use another installation method.*
 
 <details>
+  <summary>Pre-built binary</summary>
+
+  Mirador CLI can be installed with a prebuilt binary:
+
+  ```bash
+  # As root:
+  $ curl -sSL https://raw.githubusercontent.com/pimalaya/mirador/master/install.sh | sudo sh
+
+  # As a regular user:
+  $ curl -sSL https://raw.githubusercontent.com/pimalaya/mirador/master/install.sh | PREFIX=~/.local sh
+  ```
+
+  These commands install the latest binary from the GitHub [releases](https://github.com/pimalaya/mirador/releases) section.
+
+  *Binaries are built with [default](https://github.com/pimalaya/mirador/blob/master/Cargo.toml#L18) cargo features. If you want to enable or disable a feature, please use another installation method.*
+
   <summary>Cargo</summary>
 
   Mirador CLI can be installed with [cargo](https://doc.rust-lang.org/cargo/):
@@ -140,7 +170,8 @@ You can also manually edit your own configuration, from scratch:
   backend.port = 1143
   backend.encryption = false
   backend.login = "example@proton.me"
-  backend.passwd.raw = "<proton-bridge-generated-password>"
+  backend.auth.type = "password"
+  backend.auth.raw = "<proton-bridge-generated-password>"
 
   on-message-added.notify.summary = "Proton: new message from {sender}"
   on-message-added.notify.body = "{subject}"
@@ -151,13 +182,15 @@ You can also manually edit your own configuration, from scratch:
   - Save your password in any password manager that can be queried via the CLI:
 
     ```toml
-    backend.passwd.cmd = "pass show proton"
+    backend.auth.type = "password"
+    backend.auth.cmd = "pass show proton"
     ```
 
   - Use the global keyring of your system (requires the `keyring` cargo feature):
 
     ```toml
-    backend.passwd.keyring = "proton-example"
+    backend.auth.type = "password"
+    backend.auth.keyring = "proton-example"
     ```
 
     Running `mirador configure -a proton` will ask for your IMAP password, just paste the one generated previously.
@@ -188,7 +221,8 @@ You can also manually edit your own configuration, from scratch:
   backend.port = 993
   backend.encryption = "tls"
   backend.login = "example@gmail.com"
-  backend.passwd.raw = "<generated-password>"
+  backend.auth.type = "password"
+  backend.auth.raw = "<generated-password>"
 
   on-message-added.notify.summary = "Gmail: new message from {sender}"
   on-message-added.notify.body = "{subject}"
@@ -199,13 +233,15 @@ You can also manually edit your own configuration, from scratch:
   - Save your password in any password manager that can be queried via the CLI:
 
     ```toml
-    backend.passwd.cmd = "pass show gmail"
+    backend.auth.type = "password"
+    backend.auth.cmd = "pass show gmail"
     ```
 
   - Use the global keyring of your system (requires the `keyring` cargo feature):
 
     ```toml
-    backend.passwd.keyring = "gmail-example"
+    backend.auth.type = "password"
+    backend.auth.keyring = "gmail-example"
     ```
 
     Running `mirador configure -a gmail` will ask for your IMAP password, just paste the one generated previously.
@@ -225,11 +261,12 @@ You can also manually edit your own configuration, from scratch:
   backend.host = "imap.gmail.com"
   backend.port = 993
   backend.login = "example@gmail.com"
-  backend.oauth2.client-id = "<client-id>"
-  backend.oauth2.auth-url = "https://accounts.google.com/o/oauth2/v2/auth"
-  backend.oauth2.token-url = "https://www.googleapis.com/oauth2/v3/token"
-  backend.oauth2.pkce = true
-  backend.oauth2.scope = "https://mail.google.com/"
+  backend.auth.type = "oauth2"
+  backend.auth.client-id = "<client-id>"
+  backend.auth.auth-url = "https://accounts.google.com/o/oauth2/v2/auth"
+  backend.auth.token-url = "https://www.googleapis.com/oauth2/v3/token"
+  backend.auth.pkce = true
+  backend.auth.scope = "https://mail.google.com/"
 
   on-message-added.notify.summary = "Gmail: new message from {sender}"
   on-message-added.notify.body = "{subject}"
@@ -251,7 +288,8 @@ You can also manually edit your own configuration, from scratch:
   backend.port = 993
   backend.encryption = "tls"
   backend.login = "example@outlook.com"
-  backend.passwd.cmd = "pass show outlook"
+  backend.auth.type = "password"
+  backend.auth.cmd = "pass show outlook"
 
   on-message-added.notify.summary = "Outlook: new message from {sender}"
   on-message-added.notify.body = "{subject}"
@@ -270,11 +308,12 @@ You can also manually edit your own configuration, from scratch:
   backend.host = "outlook.office365.com"
   backend.port = 993
   backend.login = "example@outlook.com"
-  backend.oauth2.client-id = "<client-id>"
-  backend.oauth2.auth-url = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
-  backend.oauth2.token-url = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
-  backend.oauth2.pkce = true
-  backend.oauth2.scopes = ["https://outlook.office.com/IMAP.AccessAsUser.All"]
+  backend.auth.type = "oauth2"
+  backend.auth.client-id = "<client-id>"
+  backend.auth.auth-url = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
+  backend.auth.token-url = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
+  backend.auth.pkce = true
+  backend.auth.scopes = ["https://outlook.office.com/IMAP.AccessAsUser.All"]
 
   on-message-added.notify.summary = "Outlook: new message from {sender}"
   on-message-added.notify.body = "{subject}"
@@ -303,7 +342,8 @@ You can also manually edit your own configuration, from scratch:
   backend.port = 993
   backend.encryption = "tls"
   backend.login = "johnappleseed"
-  backend.passwd.cmd = "security find-internet-password -s 'johnappleseed'"
+  backend.auth.type = "password"
+  backend.auth.cmd = "security find-internet-password -s 'johnappleseed'"
 
   on-message-added.notify.summary = "iCloud: new message from {sender}"
   on-message-added.notify.body = "{subject}"
@@ -345,12 +385,13 @@ You can also manually edit your own configuration, from scratch:
 	
 ## Sponsoring
 
-[![nlnet](https://nlnet.nl/logo/banner-160x60.png)](https://nlnet.nl/project/Pimalaya/index.html)
+[![nlnet](https://nlnet.nl/logo/banner-160x60.png)](https://nlnet.nl/)
 
-Special thanks to the [NLnet foundation](https://nlnet.nl/project/Pimalaya/index.html) and the [European Commission](https://www.ngi.eu/) that helped the project to receive financial support from:
+Special thanks to the [NLnet foundation](https://nlnet.nl/) and the [European Commission](https://www.ngi.eu/) that helped the project to receive financial support from various programs:
 
-- [NGI Assure](https://nlnet.nl/assure/) in 2022
-- [NGI Zero Entrust](https://nlnet.nl/entrust/) in 2023
+- [NGI Assure](https://nlnet.nl/project/Himalaya/) in 2022
+- [NGI Zero Entrust](https://nlnet.nl/project/Pimalaya/) in 2023
+- [NGI Zero Core](https://nlnet.nl/project/Pimalaya-PIM/) in 2024 *(still ongoing)*
 
 If you appreciate the project, feel free to donate using one of the following providers:
 

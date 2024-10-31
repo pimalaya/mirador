@@ -3,20 +3,22 @@
 //! This module contains the [`clap`] command for watching mailbox
 //! changes of a given account.
 
+use std::sync::Arc;
+
 use async_ctrlc::CtrlC;
 use clap::Parser;
 use color_eyre::{Report, Result};
-use email::{backend::context::BackendContextBuilder, info};
+use email::backend::context::BackendContextBuilder;
 #[cfg(feature = "imap")]
 use email::{envelope::watch::imap::WatchImapEnvelopes, imap::ImapContextBuilder};
 #[cfg(feature = "maildir")]
 use email::{envelope::watch::maildir::WatchMaildirEnvelopes, maildir::MaildirContextBuilder};
-use std::sync::Arc;
+use pimalaya_tui::terminal::config::TomlConfig as _;
 use tokio::sync::oneshot;
-use tracing::instrument;
+use tracing::{info, instrument};
 
 use crate::{
-    account::arg::name::OptionalAccountNameArg, backend::config::BackendConfig, config::Config,
+    account::arg::name::OptionalAccountNameArg, backend::config::BackendConfig, config::TomlConfig,
 };
 
 /// Watch changes of the given mailbox.
@@ -31,12 +33,12 @@ pub struct WatchCommand {
 
 impl WatchCommand {
     #[instrument(skip_all)]
-    pub async fn execute(self, config: &Config) -> Result<()> {
+    pub async fn execute(self, config: &TomlConfig) -> Result<()> {
         let (request_shutdown, wait_for_shutdown_request) = oneshot::channel();
         let (shutdown, wait_for_shutdown) = oneshot::channel();
 
         let watch = async {
-            let (name, config) = config.into_account_config(self.account.name.as_deref())?;
+            let (name, config) = config.to_toml_account_config(self.account.name.as_deref())?;
             let (backend, config) = config.into_account_config(name.clone());
 
             let feature = match backend {
