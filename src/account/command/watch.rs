@@ -15,7 +15,7 @@ use email::{envelope::watch::imap::WatchImapEnvelopes, imap::ImapContextBuilder}
 use email::{envelope::watch::maildir::WatchMaildirEnvelopes, maildir::MaildirContextBuilder};
 use pimalaya_tui::terminal::config::TomlConfig as _;
 use tokio::sync::oneshot;
-use tracing::{info, instrument};
+use tracing::instrument;
 
 use crate::{
     account::arg::name::OptionalAccountNameArg, backend::config::BackendConfig, config::TomlConfig,
@@ -70,8 +70,9 @@ impl WatchCommand {
         };
 
         let interrupt = async {
+            println!("Watching folder {}, press CTRL+C to exit…", self.folder);
             CtrlC::new().expect("cannot create Ctrl+C handler").await;
-            info!("received interruption signal, exiting envelopes watcher…");
+            println!("Received interruption signal, stop watching…");
             request_shutdown.send(()).unwrap();
             wait_for_shutdown.await.unwrap();
             Result::<(), Report>::Ok(())
