@@ -10,35 +10,34 @@
 , installShellFiles
 , installShellCompletions ? stdenv.buildPlatform.canExecute stdenv.hostPlatform
 , installManPages ? stdenv.buildPlatform.canExecute stdenv.hostPlatform
-, notmuch
 , buildNoDefaultFeatures ? false
 , buildFeatures ? [ ]
 }:
 
 let
-  pname = "mirador";
   version = "1.0.0";
+  hash = "sha256-NrWBg0sjaz/uLsNs8/T4MkUgHOUvAWRix1O5usKsw6o=";
+  cargoHash = "sha256-YS8IamapvmdrOPptQh2Ef9Yold0IK1XIeGs0kDIQ5b8=";
 in
 
 rustPlatform.buildRustPackage {
-  inherit pname version;
+  inherit cargoHash version;
   inherit buildNoDefaultFeatures buildFeatures;
 
-  src = fetchFromGitHub {
-    owner = "soywod";
-    repo = pname;
-    rev = "v${version}";
-    hash = "sha256-NrWBg0sjaz/uLsNs8/T4MkUgHOUvAWRix1O5usKsw6o=";
-  };
+  pname = "mirador";
 
-  cargoHash = "sha256-YS8IamapvmdrOPptQh2Ef9Yold0IK1XIeGs0kDIQ5b8=";
+  src = fetchFromGitHub {
+    inherit hash;
+    owner = "soywod";
+    repo = "mirador";
+    rev = "v${version}";
+  };
 
   nativeBuildInputs = [ pkg-config ]
     ++ lib.optional (installManPages || installShellCompletions) installShellFiles;
 
-  buildInputs = [ ]
-    ++ lib.optional stdenv.hostPlatform.isDarwin apple-sdk
-    ++ lib.optional (builtins.elem "notmuch" buildFeatures) notmuch;
+  buildInputs =
+    lib.optional stdenv.hostPlatform.isDarwin apple-sdk;
 
   doCheck = false;
   auditable = false;
@@ -47,8 +46,8 @@ rustPlatform.buildRustPackage {
   cargoTestFlags = [ "--lib" ];
 
   postInstall = ''
-    mkdir -p $out/share/{applications,completions,man}
-    cp assets/mirador.desktop "$out"/share/applications/
+    mkdir -p $out/share/{services,completions,man}
+    cp assets/mirador@.service "$out"/share/services/
   '' + lib.optionalString (stdenv.buildPlatform.canExecute stdenv.hostPlatform) ''
     "$out"/bin/mirador man "$out"/share/man
   '' + lib.optionalString installManPages ''

@@ -13,7 +13,6 @@ pimalaya.mkDefault ({
     installShellFiles = pkgs.installShellFiles;
     installShellCompletions = false;
     installManPages = false;
-    notmuch = pkgs.notmuch;
     pkg-config = pkgs.pkg-config;
     buildNoDefaultFeatures = !defaultFeatures;
     buildFeatures = lib.splitString "," features;
