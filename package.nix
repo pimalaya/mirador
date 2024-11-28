@@ -16,8 +16,8 @@
 
 let
   version = "1.0.0";
-  hash = "sha256-NrWBg0sjaz/uLsNs8/T4MkUgHOUvAWRix1O5usKsw6o=";
-  cargoHash = "sha256-YS8IamapvmdrOPptQh2Ef9Yold0IK1XIeGs0kDIQ5b8=";
+  hash = "";
+  cargoHash = "";
 in
 
 rustPlatform.buildRustPackage {
@@ -28,7 +28,7 @@ rustPlatform.buildRustPackage {
 
   src = fetchFromGitHub {
     inherit hash;
-    owner = "soywod";
+    owner = "pimalaya";
     repo = "mirador";
     rev = "v${version}";
   };

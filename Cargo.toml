@@ -48,6 +48,7 @@ tracing = "0.1"
 
 [patch.crates-io]
 email-lib = { git = "https://github.com/pimalaya/core" }
+keyring-lib = { git = "https://github.com/pimalaya/core" }
 oauth-lib = { git = "https://github.com/pimalaya/core" }
 pimalaya-tui = { git = "https://github.com/pimalaya/tui" }
 process-lib = { git = "https://github.com/pimalaya/core" }

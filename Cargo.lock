@@ -1174,7 +1174,7 @@ dependencies = [
  "http-lib",
  "imap-client",
  "imap-next",
- "keyring-lib 1.0.2 (git+https://github.com/pimalaya/core)",
+ "keyring-lib",
  "mail-builder",
  "mail-parser",
  "maildirs",
@@ -2088,19 +2088,6 @@ dependencies = [
 [[package]]
 name = "keyring-lib"
 version = "1.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56921558c465f33d51c6047b86b76764cd2a86b69b99653b43ba1f9a32965218"
-dependencies = [
- "keyring",
- "once_cell",
- "thiserror 1.0.69",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "keyring-lib"
-version = "1.0.2"
 source = "git+https://github.com/pimalaya/core#3e294453e5a34475e5197c1ccf3b534d221ad26f"
 dependencies = [
  "keyring",
@@ -2381,7 +2368,7 @@ dependencies = [
  "clap_mangen",
  "color-eyre",
  "email-lib",
- "keyring-lib 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "keyring-lib",
  "pimalaya-tui",
  "serde",
  "shellexpand-utils",
@@ -3486,7 +3473,7 @@ name = "secret-lib"
 version = "1.0.0"
 source = "git+https://github.com/pimalaya/core#3e294453e5a34475e5197c1ccf3b534d221ad26f"
 dependencies = [
- "keyring-lib 1.0.2 (git+https://github.com/pimalaya/core)",
+ "keyring-lib",
  "process-lib",
  "serde",
  "thiserror 1.0.69",
