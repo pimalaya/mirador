@@ -62,11 +62,11 @@ rustPlatform.buildRustPackage {
     installShellCompletion "$out"/share/completions/mirador.{bash,fish,zsh}
   '';
 
-  meta = {
+  meta = rec {
     description = "CLI to watch mailbox changes";
     mainProgram = "mirador";
-    homepage = "https://github.com/pimalaya/mirador/";
-    changelog = "https://github.com/soywod/mirador/blob/v${version}/CHANGELOG.md";
+    homepage = "https://github.com/pimalaya/mirador";
+    changelog = "${homepage}/blob/v${version}/CHANGELOG.md";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ soywod ];
   };
