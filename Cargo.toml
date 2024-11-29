@@ -31,6 +31,9 @@ keyring = ["dep:keyring-lib", "email-lib/keyring", "pimalaya-tui/keyring"]
 oauth2 = ["email-lib/oauth2", "pimalaya-tui/oauth2", "keyring"]
 wizard = ["email-lib/autoconfig", "pimalaya-tui/wizard"]
 
+[build-dependencies]
+pimalaya-tui = { version = "=0.1", default-features = false, features = ["build-envs"] }
+
 [dependencies]
 async-ctrlc = { version = "1.2", features = ["termination"] }
 async-trait = "0.1"

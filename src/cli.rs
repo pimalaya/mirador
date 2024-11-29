@@ -2,7 +2,10 @@ use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::Result;
-use pimalaya_tui::terminal::{cli::arg::path_parser, config::TomlConfig as _};
+use pimalaya_tui::{
+    long_version,
+    terminal::{cli::arg::path_parser, config::TomlConfig as _},
+};
 
 use crate::{
     account::command::{
@@ -14,7 +17,9 @@ use crate::{
 };
 
 #[derive(Parser, Debug)]
-#[command(name = "mirador", author, version, about)]
+#[command(name = env!("CARGO_PKG_NAME"))]
+#[command(author, version, about)]
+#[command(long_version = long_version!())]
 #[command(propagate_version = true, infer_subcommands = true)]
 pub struct Cli {
     #[command(subcommand)]
