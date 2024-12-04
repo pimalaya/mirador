@@ -72,7 +72,7 @@ backend.auth.cmd = "pass show example-imap"
 
 # IMAP server OAuth 2.0 authorization configuration.
 #
-#right.backend.auth.type = "oauth2"
+#backend.auth.type = "oauth2"
 #
 # Client identifier issued to the client during the registration
 # process described in RFC6749.
