@@ -44,9 +44,9 @@ backend.port = 993
 
 # IMAP server encryption.
 #
-#backend.encryption = "none" # or false
-#backend.encryption = "start-tls"
-backend.encryption = "tls" # or true
+#backend.encryption.type = "none"
+#backend.encryption.type = "start-tls"
+backend.encryption.type = "tls"
 
 # IMAP server login.
 #
