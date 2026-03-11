@@ -2,13 +2,11 @@
   description = "CLI to watch mailbox changes";
 
   inputs = {
-    # TODO: https://github.com/NixOS/nixpkgs/pull/358989
-    # nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    nixpkgs.url = "github:soywod/nixpkgs";
+    nixpkgs = {
+      url = "github:nixos/nixpkgs/staging-next";
+    };
     fenix = {
-      # TODO: https://github.com/nix-community/fenix/pull/145
-      # url = "github:nix-community/fenix";
-      url = "github:soywod/fenix";
+      url = "github:nix-community/fenix/monthly";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     pimalaya = {
@@ -17,8 +15,10 @@
     };
   };
 
-  outputs = inputs: (import inputs.pimalaya).mkFlakeOutputs inputs {
-    shell = ./shell.nix;
-    default = ./default.nix;
-  };
+  outputs =
+    inputs:
+    (import inputs.pimalaya).mkFlakeOutputs inputs {
+      shell = ./shell.nix;
+      default = ./default.nix;
+    };
 }
