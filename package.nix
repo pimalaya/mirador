@@ -2,28 +2,36 @@
 # This file aims to be a replacement for the nixpkgs derivation.
 
 {
+  buildFeatures ? [ ],
+  buildNoDefaultFeatures ? false,
+  buildPackages,
+  fetchFromGitHub,
+  installManPages ? stdenv.buildPlatform.canExecute stdenv.hostPlatform,
+  installShellCompletions ? stdenv.buildPlatform.canExecute stdenv.hostPlatform,
+  installShellFiles,
   lib,
+  openssl,
   pkg-config,
   rustPlatform,
-  fetchFromGitHub,
   stdenv,
-  apple-sdk,
-  installShellFiles,
-  installShellCompletions ? stdenv.buildPlatform.canExecute stdenv.hostPlatform,
-  installManPages ? stdenv.buildPlatform.canExecute stdenv.hostPlatform,
-  buildNoDefaultFeatures ? false,
-  buildFeatures ? [ ],
 }:
 
 let
-  version = "1.0.0";
+  version = "0.1.0";
   hash = "";
   cargoHash = "";
-in
 
+  emulator = stdenv.hostPlatform.emulator buildPackages;
+  exe = stdenv.hostPlatform.extensions.executable;
+
+in
 rustPlatform.buildRustPackage {
-  inherit cargoHash version;
-  inherit buildNoDefaultFeatures buildFeatures;
+  inherit
+    cargoHash
+    version
+    buildNoDefaultFeatures
+    buildFeatures
+    ;
 
   pname = "mirador";
 
@@ -34,38 +42,37 @@ rustPlatform.buildRustPackage {
     rev = "v${version}";
   };
 
+  env = {
+    # OpenSSL should not be provided by vendors, not even on Windows
+    OPENSSL_NO_VENDOR = "1";
+  };
+
   nativeBuildInputs = [
     pkg-config
   ] ++ lib.optional (installManPages || installShellCompletions) installShellFiles;
 
-  buildInputs = lib.optional stdenv.hostPlatform.isDarwin apple-sdk;
+  buildInputs = lib.optional (builtins.elem "native-tls" buildFeatures) openssl;
 
   doCheck = false;
-  auditable = false;
-
-  # unit tests only
-  cargoTestFlags = [ "--lib" ];
 
   postInstall =
+    lib.optionalString (lib.hasInfix "wine" emulator) ''
+      export WINEPREFIX="''${WINEPREFIX:-$(mktemp -d)}"
+      mkdir -p $WINEPREFIX
     ''
-      mkdir -p $out/share/{services,completions,man}
-      cp assets/mirador@.service "$out"/share/services/
-    ''
-    + lib.optionalString (stdenv.buildPlatform.canExecute stdenv.hostPlatform) ''
-      "$out"/bin/mirador man "$out"/share/man
+    + ''
+      mkdir -p $out/share/{completions,man}
+      ${emulator} "$out"/bin/mirador${exe} manuals "$out"/share/man
+      ${emulator} "$out"/bin/mirador${exe} completions -d "$out"/share/completions bash elvish fish powershell zsh
     ''
     + lib.optionalString installManPages ''
       installManPage "$out"/share/man/*
     ''
-    + lib.optionalString (stdenv.buildPlatform.canExecute stdenv.hostPlatform) ''
-      "$out"/bin/mirador completion bash > "$out"/share/completions/mirador.bash
-      "$out"/bin/mirador completion elvish > "$out"/share/completions/mirador.elvish
-      "$out"/bin/mirador completion fish > "$out"/share/completions/mirador.fish
-      "$out"/bin/mirador completion powershell > "$out"/share/completions/mirador.powershell
-      "$out"/bin/mirador completion zsh > "$out"/share/completions/mirador.zsh
-    ''
     + lib.optionalString installShellCompletions ''
-      installShellCompletion "$out"/share/completions/mirador.{bash,fish,zsh}
+      installShellCompletion --cmd mirador \
+        --bash "$out"/share/completions/mirador.bash \
+        --fish "$out"/share/completions/mirador.fish \
+        --zsh "$out"/share/completions/_mirador
     '';
 
   meta = {

@@ -6,6 +6,7 @@ on:
       - v*
     branches:
       - master
+      - v2
 
 jobs:
   release:
@@ -13,3 +14,4 @@ jobs:
     secrets: inherit
     with:
       project: mirador
+      nixpkgs: staging-next
