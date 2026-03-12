@@ -4,47 +4,51 @@ description = "CLI to watch mailbox changes"
 version = "1.0.0"
 authors = ["soywod <clement.douin@posteo.net>"]
 edition = "2021"
-license = "MIT"
+license = "AGPL-3.0-only"
 categories = ["command-line-utilities", "email"]
 keywords = ["cli", "email", "watch", "imap", "maildir"]
-homepage = "https://github.com/pimalaya/"
-documentation = "https://github.com/pimalaya/mirador/"
-repository = "https://github.com/pimalaya/mirador/"
+homepage = "https://pimalaya.org"
+documentation = "https://github.com/pimalaya/mirador"
+repository = "https://github.com/pimalaya/mirador"
 
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-default = [
-  "imap",
-  "maildir",
-  #"keyring",
-  #"oauth2",
-  "wizard",
-]
+default = ["imap", "rustls-ring"]
 
-imap = ["email-lib/imap", "pimalaya-tui/imap"]
-maildir = ["email-lib/maildir", "pimalaya-tui/maildir"]
+imap = ["dep:io-imap", "pimalaya-toolbox/imap"]
 
-keyring = ["dep:keyring-lib", "email-lib/keyring", "pimalaya-tui/keyring"]
-oauth2 = ["email-lib/oauth2", "pimalaya-tui/oauth2", "keyring"]
-wizard = ["email-lib/autoconfig", "pimalaya-tui/wizard"]
+native-tls = ["pimalaya-toolbox/native-tls"]
+rustls-aws = ["pimalaya-toolbox/rustls-aws"]
+rustls-ring = ["pimalaya-toolbox/rustls-ring"]
+
+vendored = ["pimalaya-toolbox/vendored"]
 
 [build-dependencies]
-pimalaya-tui = { version = "0.2", default-features = false, features = ["build-envs"] }
+pimalaya-toolbox = { version = "0.0.4", default-features = false, features = ["build"] }
 
 [dependencies]
-async-ctrlc = { version = "1.2", features = ["termination"] }
-async-trait = "0.1"
-clap = { version = "4.4", features = ["derive", "wrap_help", "env"] }
-clap_complete = "4.4"
-clap_mangen = "0.2"
-color-eyre = "0.6"
-email-lib = { version = "0.26", default-features = false, features = ["tokio-rustls", "watch", "notify", "derive"] }
-pimalaya-tui = { version = "0.2", default-features = false, features = ["email", "path", "cli", "config", "tracing"] }
-keyring-lib = { version = "1", optional = true, default-features = false, features = ["tokio", "rustls"] }
+anyhow = "1"
+chrono = { version = "0.4", default-features = false }
+clap = { version = "4.4", features = ["derive", "env", "wrap_help"] }
+ctrlc = { version = "3.5", features = ["termination"] }
+dirs = "6"
+io-imap = { version = "0.0.1", default-features = false, optional = true }
+io-process = { version = "0.0.2", default-features = false, features = ["std", "serde"] }
+io-stream = { version = "0.0.2", default-features = false, features = ["std"] }
+log = "0.4"
+pimalaya-toolbox = { version = "0.0.4", default-features = false, features = ["config", "terminal", "secret"] }
+rfc2047-decoder = "1"
+secrecy = "0.10"
 serde = { version = "1", features = ["derive"] }
-shellexpand-utils = "=0.2.1"
-tokio = { version = "1.23", default-features = false, features = ["macros", "rt-multi-thread"] }
-tracing = "0.1"
+shellexpand = "3.1"
+url = { version = "2.2", features = ["serde"] }
+
+[target.'cfg(windows)'.dependencies]
+uds_windows = "1"
+
+[patch.crates-io]
+io-imap = { git = "https://github.com/pimalaya/io-imap", branch = "io" }
+pimalaya-toolbox.git = "https://github.com/pimalaya/toolbox"

@@ -1,17 +1,18 @@
 # TODO: move this to nixpkgs
 # This file aims to be a replacement for the nixpkgs derivation.
 
-{ lib
-, pkg-config
-, rustPlatform
-, fetchFromGitHub
-, stdenv
-, apple-sdk
-, installShellFiles
-, installShellCompletions ? stdenv.buildPlatform.canExecute stdenv.hostPlatform
-, installManPages ? stdenv.buildPlatform.canExecute stdenv.hostPlatform
-, buildNoDefaultFeatures ? false
-, buildFeatures ? [ ]
+{
+  lib,
+  pkg-config,
+  rustPlatform,
+  fetchFromGitHub,
+  stdenv,
+  apple-sdk,
+  installShellFiles,
+  installShellCompletions ? stdenv.buildPlatform.canExecute stdenv.hostPlatform,
+  installManPages ? stdenv.buildPlatform.canExecute stdenv.hostPlatform,
+  buildNoDefaultFeatures ? false,
+  buildFeatures ? [ ],
 }:
 
 let
@@ -33,11 +34,11 @@ rustPlatform.buildRustPackage {
     rev = "v${version}";
   };
 
-  nativeBuildInputs = [ pkg-config ]
-    ++ lib.optional (installManPages || installShellCompletions) installShellFiles;
+  nativeBuildInputs = [
+    pkg-config
+  ] ++ lib.optional (installManPages || installShellCompletions) installShellFiles;
 
-  buildInputs =
-    lib.optional stdenv.hostPlatform.isDarwin apple-sdk;
+  buildInputs = lib.optional stdenv.hostPlatform.isDarwin apple-sdk;
 
   doCheck = false;
   auditable = false;
@@ -45,29 +46,34 @@ rustPlatform.buildRustPackage {
   # unit tests only
   cargoTestFlags = [ "--lib" ];
 
-  postInstall = ''
-    mkdir -p $out/share/{services,completions,man}
-    cp assets/mirador@.service "$out"/share/services/
-  '' + lib.optionalString (stdenv.buildPlatform.canExecute stdenv.hostPlatform) ''
-    "$out"/bin/mirador man "$out"/share/man
-  '' + lib.optionalString installManPages ''
-    installManPage "$out"/share/man/*
-  '' + lib.optionalString (stdenv.buildPlatform.canExecute stdenv.hostPlatform) ''
-    "$out"/bin/mirador completion bash > "$out"/share/completions/mirador.bash
-    "$out"/bin/mirador completion elvish > "$out"/share/completions/mirador.elvish
-    "$out"/bin/mirador completion fish > "$out"/share/completions/mirador.fish
-    "$out"/bin/mirador completion powershell > "$out"/share/completions/mirador.powershell
-    "$out"/bin/mirador completion zsh > "$out"/share/completions/mirador.zsh
-  '' + lib.optionalString installShellCompletions ''
-    installShellCompletion "$out"/share/completions/mirador.{bash,fish,zsh}
-  '';
+  postInstall =
+    ''
+      mkdir -p $out/share/{services,completions,man}
+      cp assets/mirador@.service "$out"/share/services/
+    ''
+    + lib.optionalString (stdenv.buildPlatform.canExecute stdenv.hostPlatform) ''
+      "$out"/bin/mirador man "$out"/share/man
+    ''
+    + lib.optionalString installManPages ''
+      installManPage "$out"/share/man/*
+    ''
+    + lib.optionalString (stdenv.buildPlatform.canExecute stdenv.hostPlatform) ''
+      "$out"/bin/mirador completion bash > "$out"/share/completions/mirador.bash
+      "$out"/bin/mirador completion elvish > "$out"/share/completions/mirador.elvish
+      "$out"/bin/mirador completion fish > "$out"/share/completions/mirador.fish
+      "$out"/bin/mirador completion powershell > "$out"/share/completions/mirador.powershell
+      "$out"/bin/mirador completion zsh > "$out"/share/completions/mirador.zsh
+    ''
+    + lib.optionalString installShellCompletions ''
+      installShellCompletion "$out"/share/completions/mirador.{bash,fish,zsh}
+    '';
 
-  meta = rec {
+  meta = {
     description = "CLI to watch mailbox changes";
     mainProgram = "mirador";
     homepage = "https://github.com/pimalaya/mirador";
-    changelog = "${homepage}/blob/v${version}/CHANGELOG.md";
-    license = lib.licenses.mit;
+    changelog = "https://github.com/pimalaya/mirador/blob/v${version}/CHANGELOG.md";
+    license = lib.licenses.agpl3Plus;
     maintainers = with lib.maintainers; [ soywod ];
   };
 }

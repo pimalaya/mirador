@@ -1,24 +1,41 @@
+// This file is part of Mirador, a CLI to watch mailbox changes.
+//
+// Copyright (C) 2024-2026 Clément DOUIN <pimalaya.org@posteo.net>
+//
+// This program is free software: you can redistribute it and/or
+// modify it under the terms of the GNU Affero General Public License
+// as published by the Free Software Foundation, either version 3 of
+// the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public
+// License along with this program. If not, see
+// <https://www.gnu.org/licenses/>.
+
+mod cli;
+mod config;
+#[cfg(feature = "imap")]
+mod imap;
+
 use clap::Parser;
-use color_eyre::Result;
-use mirador::{cli::Cli, config::TomlConfig};
-use pimalaya_tui::terminal::{cli::tracing, config::TomlConfig as _};
+use pimalaya_toolbox::terminal::{error::ErrorReport, log::Logger, printer::StdoutPrinter};
 
-#[tokio::main]
-async fn main() -> Result<()> {
-    let tracing = tracing::install()?;
+use crate::cli::MiradorCli;
 
-    #[cfg(feature = "keyring")]
-    keyring::set_global_service_name("mirador-cli");
+fn main() {
+    let cli = MiradorCli::parse();
 
-    let cli = Cli::parse();
+    Logger::init(&cli.log);
 
-    let Some(cmd) = cli.command else {
-        let config = TomlConfig::from_paths_or_default(&cli.config_paths).await?;
-        println!("{config:#?}");
-        return Ok(());
-    };
+    let mut printer = StdoutPrinter::new(&cli.json);
+    let config_paths = cli.config_paths.as_ref();
+    let account_name = cli.account.name.as_deref();
 
-    let res = cmd.execute(&cli.config_paths).await;
+    let result = cli.command.exec(&mut printer, config_paths, account_name);
 
-    tracing.with_debug_and_trace_notes(res)
+    ErrorReport::eval(&mut printer, result)
 }
